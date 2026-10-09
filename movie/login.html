@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in – ShowTime</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f7fa;--panel:#fff;--ink:#16181f;--mute:#5d6272;--line:#e3e5ec;--accent:#d42a5b;--ok:#157a4a;--err:#c0213f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px}
+.hd{max-width:900px;margin:0 auto}
+.logo{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);text-decoration:none}.logo i{font-style:normal;color:var(--accent)}
+main{max-width:440px;margin:0 auto;padding:32px 16px 48px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+h1{font-size:26px;line-height:1.2;margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 16px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mute);margin:12px 0}
+.pre{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.pre span{display:grid;place-items:center;padding:0 12px;background:var(--bg);color:var(--ink);font-weight:600}
+input{font:inherit;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:12px;width:100%;letter-spacing:.04em}
+.pre input{border:0;border-radius:0}
+input:focus,button:focus-visible,a:focus-visible{outline:3px solid #8aa4ff;outline-offset:2px}
+.er{color:var(--err);font-size:14px;min-height:20px;margin:6px 0}
+button.b{font:inherit;font-weight:700;border:0;border-radius:10px;padding:14px 16px;cursor:pointer;background:var(--accent);color:#fff;width:100%}
+button.lk{font:inherit;background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0}
+button.lk:disabled{color:var(--mute);cursor:default}
+.dm{font-size:13px;color:var(--mute);margin:18px 0 8px;padding:10px 12px;background:var(--bg);border-radius:10px}
+.skip{display:block;text-align:center;color:var(--mute);margin-top:6px}
+.good{color:var(--ok);font-weight:700}
+</style>
+</head>
+<body>
+<header><div class="hd"><a class="logo" href="showtime-booking.html">Show<i>Time</i></a></div></header>
+<main><div class="card">
+  <div id="s1">
+    <h1>Sign in</h1>
+    <p class="sub">Enter your mobile number to continue. New here? We create your account automatically.</p>
+    <label class="fld" for="mob">Mobile number<div class="pre"><span>+91</span><input id="mob" inputmode="numeric" maxlength="10" placeholder="10-digit number" autocomplete="tel-national"></div></label>
+    <div class="er" id="e1" role="alert"></div>
+    <button class="b" id="c1">Continue</button>
+  </div>
+  <div id="s2" hidden>
+    <h1>Enter OTP</h1>
+    <p class="sub">We sent a 6-digit code to +91 <b id="shown"></b>. <button class="lk" id="chg">Change</button></p>
+    <label class="fld" for="otp">OTP<input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code"></label>
+    <div class="er" id="e2" role="alert"></div>
+    <button class="b" id="c2">Verify and sign in</button>
+    <p class="sub" style="margin:12px 0 0"><button class="lk" id="res" disabled>Resend OTP in 30s</button></p>
+  </div>
+  <div id="s3" hidden><h1 class="good">Signed in</h1><p class="sub">Taking you back to the movies...</p></div>
+  <p class="dm">Demo only. No SMS is sent and nothing leaves your device. Use any 10-digit number starting with 6 to 9, and the OTP <b>123456</b>.</p>
+  <a class="skip" href="showtime-booking.html">Continue as guest</a>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+const nx=new URLSearchParams(location.search).get("next")||"";
+const next=/^[\w\-]+\.html$/.test(nx)?nx:"showtime-booking.html";
+let mobile="",timer=null;
+function save(u){let ok=false;try{localStorage.setItem("st_user",JSON.stringify(u));ok=localStorage.getItem("st_user")!==null}catch(e){}return ok}
+function countdown(){
+  let n=30;const b=$("res");b.disabled=true;b.textContent="Resend OTP in "+n+"s";clearInterval(timer);
+  timer=setInterval(()=>{n--;if(n<=0){clearInterval(timer);b.disabled=false;b.textContent="Resend OTP"}else b.textContent="Resend OTP in "+n+"s"},1000)}
+function step2(){
+  mobile=$("mob").value.trim();
+  if(!/^[6-9]\d{9}$/.test(mobile)){$("e1").textContent="Enter a valid 10-digit mobile number starting with 6 to 9.";return}
+  $("e1").textContent="";$("shown").textContent=mobile.slice(0,2)+"••••"+mobile.slice(-3);
+  $("s1").hidden=true;$("s2").hidden=false;$("otp").value="";$("otp").focus();countdown()}
+function verify(){
+  const o=$("otp").value.trim();
+  if(!/^\d{6}$/.test(o)){$("e2").textContent="Enter the 6-digit OTP.";return}
+  if(o!=="123456"){$("e2").textContent="Incorrect OTP. For this demo, use 123456.";return}
+  clearInterval(timer);
+  const ok=save({mobile});
+  $("s2").hidden=true;$("s3").hidden=false;
+  setTimeout(()=>{location.href=next+(ok?"":"?u="+mobile)},700)}
+$("c1").onclick=step2;$("c2").onclick=verify;
+$("chg").onclick=()=>{clearInterval(timer);$("s2").hidden=true;$("s1").hidden=false;$("mob").focus()};
+$("res").onclick=()=>{countdown();$("e2").textContent="";$("otp").focus()};
+$("mob").oninput=e=>{e.target.value=e.target.value.replace(/\D/g,"")};
+$("otp").oninput=e=>{e.target.value=e.target.value.replace(/\D/g,"")};
+$("mob").onkeydown=e=>{if(e.key==="Enter")step2()};
+$("otp").onkeydown=e=>{if(e.key==="Enter")verify()};
+$("mob").focus();
+</script>
+</body>
+</html>
